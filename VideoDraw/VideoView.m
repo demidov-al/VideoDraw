@@ -54,6 +54,7 @@
         else {
             CGContextSetRGBFillColor(ctx, 0.0, 0.0, 0.0, 0.5);
             float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
+            pseudoHeight = (currentPoint.x - startPoint.x > 0) ? pseudoHeight : -pseudoHeight;
             CGContextFillRect(ctx, CGRectMake(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight));
         }
     }
@@ -82,6 +83,7 @@
     
     if ([self.delegate respondsToSelector:@selector(doSnapshotWithRect:)]) {
         float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
+        pseudoHeight = (currentPoint.x - startPoint.x > 0) ? pseudoHeight : -pseudoHeight;
         NSRect destinationRect = NSMakeRect(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight);
         [self.delegate doSnapshotWithRect:destinationRect];
     }
