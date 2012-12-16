@@ -11,7 +11,7 @@
 #import "VideoView.h"
 
 typedef struct _pixel {
-    int RED, GREEN, BLUE;
+    float RED, GREEN, BLUE;
 } pixel;
 
 @class DrawingView;

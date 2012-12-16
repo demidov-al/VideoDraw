@@ -13,24 +13,27 @@
 #import <CoreMedia/CoreMedia.h>
 
 #define SIZE_OF_MASK 5*5
+#define EPS 50
 
 float red_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
-                  1.0, 1.0, 1.0, 1.0, 1.0,
-                  1.0, 1.0, 1.0, 1.0, 1.0,
-                  1.0, 1.0, 1.0, 1.0, 1.0,
-                  1.0, 1.0, 1.0, 1.0, 1.0};
-
-float green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
                     1.0, 1.0, 1.0, 1.0, 1.0,
                     1.0, 1.0, 1.0, 1.0, 1.0,
                     1.0, 1.0, 1.0, 1.0, 1.0,
                     1.0, 1.0, 1.0, 1.0, 1.0};
 
+float green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+                      1.0, 1.0, 1.0, 1.0, 1.0,
+                      1.0, 1.0, 1.0, 1.0, 1.0,
+                      1.0, 1.0, 1.0, 1.0, 1.0,
+                      1.0, 1.0, 1.0, 1.0, 1.0};
+
 float blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
-                   1.0, 1.0, 1.0, 1.0, 1.0,
-                   1.0, 1.0, 1.0, 1.0, 1.0,
-                   1.0, 1.0, 1.0, 1.0, 1.0,
-                   1.0, 1.0, 1.0, 1.0, 1.0};
+                     1.0, 1.0, 1.0, 1.0, 1.0,
+                     1.0, 1.0, 1.0, 1.0, 1.0,
+                     1.0, 1.0, 1.0, 1.0, 1.0,
+                     1.0, 1.0, 1.0, 1.0, 1.0};
+
+float originalRedChannelEqv = 0.0, originalGreenChannelEqv = 0.0, originalBlueChannelEqv = 0.0;
 
 #pragma mark - Helpful functions
 
@@ -57,7 +60,7 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     
     unsigned x = 0, y = 0;
     BOOL returnValue = NO;
-    float redAverage = 0.0, greenAverage = 0.0, blueAverage = 0.0, temp = 0.0, response = 0.0;
+    float redChannelEqv = 0.0, greenChannelEqv = 0.0, blueChannelEqv = 0.0, temp = 0.0, response = 0.0;
     pixel pix;
     int globalIndex = 0;
     unsigned arraySize = width*height;
@@ -68,21 +71,25 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 pix = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
-                redAverage += pix.RED;
-                greenAverage += pix.GREEN;
-                blueAverage += pix.BLUE;
+                redChannelEqv += pix.RED*red_mask[r*size+c];
+                blueChannelEqv += pix.BLUE*blue_mask[r*size+c];
+                greenChannelEqv += pix.GREEN*green_mask[r*size+c];
+#warning there is mistake here
             }
         }
         
-        temp = (redAverage + greenAverage + blueAverage) / maskSize;
-        if (temp > response) {
+        redChannelEqv /= maskSize;
+        blueChannelEqv /= maskSize;
+        greenChannelEqv /= maskSize;
+        NSLog(@"%f %f %f", fabsf(redChannelEqv - originalRedChannelEqv), fabsf(greenChannelEqv - originalGreenChannelEqv), fabsf(blueChannelEqv - originalBlueChannelEqv));
+        if (fabsf(redChannelEqv - originalRedChannelEqv) < EPS && fabsf(greenChannelEqv - originalGreenChannelEqv) < EPS && fabsf(blueChannelEqv - originalBlueChannelEqv) < EPS) {
             coords->x = x;
             coords->y = y;
             response = temp;
             returnValue = YES;
         }
         
-        redAverage = greenAverage = blueAverage = 0.0;
+        redChannelEqv = greenChannelEqv = blueChannelEqv = 0.0;
         
         x++;
         globalIndex += size;
@@ -186,7 +193,16 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
         red_mask[i] = temp_pixel.RED / Pix.RED;
         green_mask[i] = temp_pixel.GREEN / Pix.GREEN;
         blue_mask[i] = temp_pixel.BLUE / Pix.BLUE;
+        NSLog(@"r %f g %f b %f", red_mask[i], green_mask[i], blue_mask[i]);
+        
+        originalBlueChannelEqv += Pix.BLUE;
+        originalRedChannelEqv += Pix.RED;
+        originalGreenChannelEqv += Pix.GREEN;
     }
+    originalBlueChannelEqv /= SIZE_OF_MASK;
+    originalGreenChannelEqv /= SIZE_OF_MASK;
+    originalRedChannelEqv /= SIZE_OF_MASK;
+    NSLog(@"Original Eqvs: r = %f g = %f b = %f", originalRedChannelEqv, originalGreenChannelEqv, originalBlueChannelEqv);
     
     free(rawData);
 }
@@ -224,9 +240,10 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     if (!self.isDrawing) return;
     NSPoint newPoint;
     if (getPointCoordsFromImageArray(&newPoint, self.baseAddress, width, height, SIZE_OF_MASK/5)) {
+        NSLog(@"Found point!");
         [self.drawView drawPointAtX:newPoint.x andY:newPoint.y];
     }
-    else NSLog(@"No points found");
+//    else NSLog(@"No points found");
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize
