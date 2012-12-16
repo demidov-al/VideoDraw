@@ -195,7 +195,27 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
 
 - (void)doSnapshotWithRect:(NSRect)snapshotRect
 {
+    float widthRelation = width / self.videoView.videoLayer.frame.size.width;
+    float heightRelation = height / self.videoView.videoLayer.frame.size.height;
+    snapshotRect.origin.x *= widthRelation;
+    snapshotRect.origin.y *= heightRelation;
+    snapshotRect.origin.y = height - snapshotRect.origin.y;
+    snapshotRect.size.width *= widthRelation;
+    snapshotRect.size.height *= -heightRelation;
+    NSLog(@"Origin: %f %f Size: %f %f", snapshotRect.origin.x, snapshotRect.origin.y, snapshotRect.size.width, snapshotRect.size.height);
     
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(self.baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    CGImageRef quartzImage = CGBitmapContextCreateImage(context);
+    CGImageRef smallImage = CGImageCreateWithImageInRect(quartzImage, snapshotRect);
+    
+    NSImage *finisheImage = [[NSImage alloc] initWithCGImage:smallImage size:snapshotRect.size];
+    [self.preview setImage:finisheImage];
+    
+    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+    CGImageRelease(smallImage);
+    CGImageRelease(quartzImage);
 }
 
 @end
