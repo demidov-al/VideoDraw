@@ -34,22 +34,6 @@ pixel getPixelFromBGRAArray(int pixNum, unsigned char *array) {
 BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigned width, unsigned height, const short int size) {
     if (!((width % size) == 0 && (height % size) == 0)) return NO;
     
-//    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
-//    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-//    CGContextRef context = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
-//    CGImageRef quartzImage = CGBitmapContextCreateImage(context);
-//    CGContextRelease(context);
-//    CGColorSpaceRelease(colorSpace);
-//
-//    
-//    CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, CFSTR("newImage.jpg"), kCFURLPOSIXPathStyle, NO);
-//    CGImageDestinationRef dest = CGImageDestinationCreateWithURL(url, kUTTypeJPEG, 1, 0);
-//    CGImageDestinationAddImage(dest, quartzImage, 0);
-//    CGImageDestinationFinalize(dest);
-//    CFRelease(url);
-//    CGImageRelease(quartzImage);
-    
-    
     unsigned x = 0, y = 0;
     BOOL returnValue = NO;
     float redAverage = 0.0, greenAverage = 0.0, blueAverage = 0.0, temp = 0.0, response = 0.0;
@@ -91,6 +75,12 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     return returnValue;
 }
 
+
+@interface AppController ()
+
+- (void)analyzeImageForMask:(CGImageRef)maskImage;
+
+@end
 
 @implementation AppController
 
@@ -148,6 +138,13 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     }
 }
 
+#pragma mark - Private methods
+
+- (void)analyzeImageForMask:(CGImageRef)maskImage
+{
+    
+}
+
 #pragma mark - Actions
 
 - (IBAction)toggleDrawing:(NSButton *)sender
@@ -202,20 +199,21 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     snapshotRect.origin.y = height - snapshotRect.origin.y;
     snapshotRect.size.width *= widthRelation;
     snapshotRect.size.height *= -heightRelation;
-    NSLog(@"Origin: %f %f Size: %f %f", snapshotRect.origin.x, snapshotRect.origin.y, snapshotRect.size.width, snapshotRect.size.height);
     
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(self.baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
     CGImageRef quartzImage = CGBitmapContextCreateImage(context);
     CGImageRef smallImage = CGImageCreateWithImageInRect(quartzImage, snapshotRect);
     
-    NSImage *finisheImage = [[NSImage alloc] initWithCGImage:smallImage size:snapshotRect.size];
-    [self.preview setImage:finisheImage];
+    NSImage *finalImage = [[NSImage alloc] initWithCGImage:smallImage size:self.preview.frame.size];
+    [self.preview setImage:finalImage];
     
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
-    CGImageRelease(smallImage);
     CGImageRelease(quartzImage);
+    
+    [self analyzeImageForMask:smallImage];
+    CGImageRelease(smallImage);
 }
 
 @end

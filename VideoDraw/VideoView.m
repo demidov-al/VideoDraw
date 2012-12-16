@@ -16,18 +16,6 @@
 @synthesize videoLayer = _videoLayer;
 @synthesize rectLayer = _rectLayer;
 
-#pragma mark - Lifecycle methods
-
-- (id)initWithFrame:(NSRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        
-    }
-    
-    return self;
-}
-
 #pragma mark - Public methods
 
 - (BOOL)prepareForVideoWithSession:(AVCaptureSession *)session
@@ -65,7 +53,8 @@
         if (shouldClear) return;
         else {
             CGContextSetRGBFillColor(ctx, 0.0, 0.0, 0.0, 0.5);
-            CGContextFillRect(ctx, CGRectMake(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, currentPoint.y - startPoint.y));
+            float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
+            CGContextFillRect(ctx, CGRectMake(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight));
         }
     }
 }
@@ -92,9 +81,9 @@
     [self.rectLayer setNeedsDisplay];
     
     if ([self.delegate respondsToSelector:@selector(doSnapshotWithRect:)]) {
-        NSRect destinationRect = NSMakeRect(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, currentPoint.y - startPoint.y);
+        float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
+        NSRect destinationRect = NSMakeRect(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight);
         [self.delegate doSnapshotWithRect:destinationRect];
-        NSLog(@"message sent");
     }
 }
 
