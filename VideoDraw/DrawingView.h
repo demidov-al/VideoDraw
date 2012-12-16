@@ -13,5 +13,6 @@
 @property (readonly, nonatomic, strong) NSMutableArray *points;
 
 - (void)drawPointAtX:(float)X andY:(float)Y;
+- (void)clearPoints;
 
 @end

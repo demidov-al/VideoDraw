@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7603656616712E1900878FB7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7603656516712E1900878FB7 /* QuartzCore.framework */; };
+		7655682D167D10DD00375A0F /* VideoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7655682C167D10DD00375A0F /* VideoView.m */; };
 		767A065B1674E026007F3009 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 767A065A1674E026007F3009 /* CoreMedia.framework */; };
 		767A065F1674E4A9007F3009 /* DrawingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 767A065E1674E4A9007F3009 /* DrawingView.m */; };
 		76B17FB9167090E2004E434B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 76B17FB8167090E2004E434B /* Cocoa.framework */; };
@@ -36,6 +37,8 @@
 
 /* Begin PBXFileReference section */
 		7603656516712E1900878FB7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		7655682B167D10DD00375A0F /* VideoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoView.h; sourceTree = "<group>"; };
+		7655682C167D10DD00375A0F /* VideoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoView.m; sourceTree = "<group>"; };
 		767A065A1674E026007F3009 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		767A065D1674E4A9007F3009 /* DrawingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DrawingView.h; sourceTree = "<group>"; };
 		767A065E1674E4A9007F3009 /* DrawingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DrawingView.m; sourceTree = "<group>"; };
@@ -138,6 +141,8 @@
 				76B17FED1670977D004E434B /* AppController.m */,
 				767A065D1674E4A9007F3009 /* DrawingView.h */,
 				767A065E1674E4A9007F3009 /* DrawingView.m */,
+				7655682B167D10DD00375A0F /* VideoView.h */,
+				7655682C167D10DD00375A0F /* VideoView.m */,
 				76B17FCD167090E2004E434B /* MainMenu.xib */,
 				76B17FBF167090E2004E434B /* Supporting Files */,
 			);
@@ -287,6 +292,7 @@
 				76B17FCC167090E2004E434B /* AppDelegate.m in Sources */,
 				76B17FEE1670977D004E434B /* AppController.m in Sources */,
 				767A065F1674E4A9007F3009 /* DrawingView.m in Sources */,
+				7655682D167D10DD00375A0F /* VideoView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

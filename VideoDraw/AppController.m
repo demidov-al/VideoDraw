@@ -20,9 +20,7 @@ int mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
               1.0, 1.0, 1.0, 1.0, 1.0,
               1.0, 1.0, 1.0, 1.0, 1.0};
 
-typedef struct _pixel {
-    int RED, GREEN, BLUE;
-} pixel;
+#pragma mark - Helpful functions
 
 pixel getPixelFromBGRAArray(int pixNum, unsigned char *array) {
     pixel Pixel;
@@ -33,14 +31,10 @@ pixel getPixelFromBGRAArray(int pixNum, unsigned char *array) {
     return Pixel;
 }
 
-BOOL getPointCoordsFromImageArray(NSPoint *coords, CVImageBufferRef imageBuffer, const short int size) {
-    uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-//    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
-    unsigned width = (unsigned)CVPixelBufferGetWidth(imageBuffer);
-    unsigned height = (unsigned)CVPixelBufferGetHeight(imageBuffer);
-    
+BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigned width, unsigned height, const short int size) {
     if (!((width % size) == 0 && (height % size) == 0)) return NO;
     
+//    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
 //    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 //    CGContextRef context = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
 //    CGImageRef quartzImage = CGBitmapContextCreateImage(context);
@@ -98,17 +92,23 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, CVImageBufferRef imageBuffer,
 }
 
 
-
 @implementation AppController
 
 @synthesize videoView = _videoView;
 @synthesize drawView = _drawView;
+@synthesize isDrawing = _isDrawing;
+@synthesize preview = _preview;
+@synthesize baseAddress = _baseAddress;
+
+#pragma mark - Lidecycle methods
 
 - (void)awakeFromNib
 {
-    [self.videoView setWantsLayer:YES];
+    self.isDrawing = NO;
     [self loadVideo];
 }
+
+#pragma mark - Public methods
 
 - (void)loadVideo
 {
@@ -117,20 +117,8 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, CVImageBufferRef imageBuffer,
     if([session canSetSessionPreset:AVCaptureSessionPresetMedium])
         session.sessionPreset =  AVCaptureSessionPresetMedium;
     
-    
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    NSColor *color = [[NSColor blueColor] colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
-    CGFloat components[4];
-    [color getRed:&components[0] green:&components[1] blue:&components[2] alpha:&components[3]];
-    CGColorRef cgColor = CGColorCreate(colorSpace, components);
-    
-    [self.videoView.layer setBackgroundColor:cgColor];
-    CGColorSpaceRelease (colorSpace);
-    CGColorRelease (cgColor);
-    
-    _videoLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
-    _videoLayer.frame = self.videoView.layer.bounds;
-    [self.videoView.layer addSublayer:_videoLayer];
+    [self.videoView prepareForVideoWithSession:session];
+    [self.videoView setDelegate:self];
     
     AVCaptureDeviceInput *videoInput = [AVCaptureDeviceInput deviceInputWithDevice:[AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo] error:nil];
     
@@ -153,28 +141,61 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, CVImageBufferRef imageBuffer,
             [session addOutput:output];
         
         [session commitConfiguration];
+        width = 1280;
+        height = 720;
+        bytesPerRow = 5120;
         [session startRunning];
     }
 }
 
+#pragma mark - Actions
+
+- (IBAction)toggleDrawing:(NSButton *)sender
+{
+    if (self.isDrawing) {
+        self.isDrawing = NO;
+        [sender setTitle:@"Begin Drawing"];
+    }
+    else {
+        self.isDrawing = YES;
+        [sender setTitle:@"Stop Drawing"];
+    }
+}
+
+- (IBAction)cleanDrawView:(NSButton *)sender
+{
+    if (!self.isDrawing) {
+        [self.drawView clearPoints];
+    }
+}
+
+#pragma mark - Delegate methods
+
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    CVPixelBufferLockBaseAddress(imageBuffer,0);
+    CVPixelBufferLockBaseAddress(imageBuffer, 0);
+    self.baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
+    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+    
+    if (!self.isDrawing) return;
     NSPoint newPoint;
-    if (getPointCoordsFromImageArray(&newPoint, imageBuffer, 5)) {
-        NSLog(@"New point at x = %.1f y = %.1f detected", newPoint.x, newPoint.y);
+    if (getPointCoordsFromImageArray(&newPoint, self.baseAddress, width, height, 5)) {
         [self.drawView drawPointAtX:newPoint.x andY:newPoint.y];
     }
     else NSLog(@"No points found");
-    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
-//    exit(EXIT_FAILURE);
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize
 {
-    _videoLayer.frame = self.videoView.layer.bounds;
+    self.videoView.videoLayer.frame = self.videoView.layer.bounds;
+    self.videoView.rectLayer.frame = self.videoView.layer.bounds;
     return frameSize;
+}
+
+- (void)doSnapshotWithRect:(NSRect)snapshotRect
+{
+    
 }
 
 @end
