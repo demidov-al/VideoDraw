@@ -193,10 +193,10 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
         green_mask[i] = temp_pixel.GREEN / Pix.GREEN;
         blue_mask[i] = temp_pixel.BLUE / Pix.BLUE;
         
-        if (red_mask[i] > 1.0 || green_mask[i] > 1.0 || blue_mask[i] > 1.0) {
-            NSLog(@"temp: %.1f %.1f %.1f Pix: %.1f %.1f %.1f", temp_pixel.RED, temp_pixel.GREEN, temp_pixel.BLUE, Pix.RED, Pix.GREEN, Pix.BLUE);
-            NSLog(@"r %.1f g %.1f b %.1f", red_mask[i], green_mask[i], blue_mask[i]);
-        }
+//        if (red_mask[i] > 1.0 || green_mask[i] > 1.0 || blue_mask[i] > 1.0) {
+//            NSLog(@"temp: %.1f %.1f %.1f Pix: %.1f %.1f %.1f", temp_pixel.RED, temp_pixel.GREEN, temp_pixel.BLUE, Pix.RED, Pix.GREEN, Pix.BLUE);
+//            NSLog(@"r %.1f g %.1f b %.1f", red_mask[i], green_mask[i], blue_mask[i]);
+//        }
         
         originalBlueChannelEqv += Pix.BLUE;
         originalRedChannelEqv += Pix.RED;
