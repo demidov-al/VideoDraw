@@ -13,27 +13,26 @@
 #import <CoreMedia/CoreMedia.h>
 
 #define SIZE_OF_MASK 5*5
-#define EPS 50
+#define GLOBAL_EPS 0.3
 
-float red_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
-                    1.0, 1.0, 1.0, 1.0, 1.0,
-                    1.0, 1.0, 1.0, 1.0, 1.0,
-                    1.0, 1.0, 1.0, 1.0, 1.0,
-                    1.0, 1.0, 1.0, 1.0, 1.0};
+float current_red_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+							1.0, 1.0, 1.0, 1.0, 1.0,
+							1.0, 1.0, 1.0, 1.0, 1.0,
+							1.0, 1.0, 1.0, 1.0, 1.0,
+							1.0, 1.0, 1.0, 1.0, 1.0};
 
-float green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
-                      1.0, 1.0, 1.0, 1.0, 1.0,
-                      1.0, 1.0, 1.0, 1.0, 1.0,
-                      1.0, 1.0, 1.0, 1.0, 1.0,
-                      1.0, 1.0, 1.0, 1.0, 1.0};
+float current_green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+							  1.0, 1.0, 1.0, 1.0, 1.0,
+							  1.0, 1.0, 1.0, 1.0, 1.0,
+							  1.0, 1.0, 1.0, 1.0, 1.0,
+							  1.0, 1.0, 1.0, 1.0, 1.0};
 
-float blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0, 1.0, 1.0};
+float current_blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+							 1.0, 1.0, 1.0, 1.0, 1.0,
+							 1.0, 1.0, 1.0, 1.0, 1.0,
+							 1.0, 1.0, 1.0, 1.0, 1.0,
+							 1.0, 1.0, 1.0, 1.0, 1.0};
 
-float originalRedChannelEqv = 0.0, originalGreenChannelEqv = 0.0, originalBlueChannelEqv = 0.0;
 
 #pragma mark - Helpful functions
 
@@ -55,41 +54,57 @@ pixel getPixelFromRGBAArray(int pixNum, unsigned char *array) {
     return Pixel;
 }
 
+BOOL compareMasks(float *firstMask, float *secondMask, float eps, int size) {
+	for (int i = 0; i < size; i++) {
+		if (fabsf(firstMask[i] - secondMask[i]) > eps) {
+			return NO;
+		}
+	}
+	return YES;
+}
+
 BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigned width, unsigned height, const short int size) {
     if (!((width % size) == 0 && (height % size) == 0)) return NO;
     
     unsigned x = 0, y = 0;
     BOOL returnValue = NO;
-    float redChannelEqv = 0.0, greenChannelEqv = 0.0, blueChannelEqv = 0.0, temp = 0.0, response = 0.0;
-    pixel pix;
     int globalIndex = 0;
     unsigned arraySize = width*height;
     unsigned maskSize = size * size;
+	
+	float redMask[25];
+	float greenMask[25];
+	float blueMask[25];
+	pixel maxPix;
     
     while (globalIndex < arraySize) {
-        
+		maxPix.RED = maxPix.GREEN = maxPix.BLUE = 0.0;
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
-                pix = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
-                redChannelEqv += pix.RED*red_mask[r*size+c];
-                blueChannelEqv += pix.BLUE*blue_mask[r*size+c];
-                greenChannelEqv += pix.GREEN*green_mask[r*size+c];
-#warning there is mistake here
+                pixel temp_pixel = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
+				if (temp_pixel.RED > maxPix.RED) maxPix.RED = temp_pixel.RED;
+				if (temp_pixel.GREEN > maxPix.GREEN) maxPix.GREEN = temp_pixel.GREEN;
+				if (temp_pixel.BLUE > maxPix.BLUE) maxPix.BLUE = temp_pixel.BLUE;
             }
         }
-        
-        redChannelEqv /= maskSize;
-        blueChannelEqv /= maskSize;
-        greenChannelEqv /= maskSize;
-        NSLog(@"%f %f %f", fabsf(redChannelEqv - originalRedChannelEqv), fabsf(greenChannelEqv - originalGreenChannelEqv), fabsf(blueChannelEqv - originalBlueChannelEqv));
-        if (fabsf(redChannelEqv - originalRedChannelEqv) < EPS && fabsf(greenChannelEqv - originalGreenChannelEqv) < EPS && fabsf(blueChannelEqv - originalBlueChannelEqv) < EPS) {
+		
+		for (int r = 0; r < size; r++) {
+            for (int c = 0; c < size; c++) {
+                pixel temp_pixel = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
+				redMask[r*size + c] = temp_pixel.RED / maxPix.RED;
+				greenMask[r*size + c] = temp_pixel.GREEN / maxPix.GREEN;
+				blueMask[r*size + c] = temp_pixel.BLUE / maxPix.BLUE;
+            }
+        }
+		
+		
+        if (compareMasks(redMask, current_red_mask, GLOBAL_EPS, maskSize) &&
+			compareMasks(greenMask, current_green_mask, GLOBAL_EPS, maskSize) &&
+			compareMasks(blueMask, current_blue_mask, GLOBAL_EPS, maskSize)) {
             coords->x = x;
             coords->y = y;
-            response = temp;
             returnValue = YES;
         }
-        
-        redChannelEqv = greenChannelEqv = blueChannelEqv = 0.0;
         
         x++;
         globalIndex += size;
@@ -189,23 +204,10 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     
     for (int i = 0; i < SIZE_OF_MASK; i++) {
         pixel temp_pixel = getPixelFromRGBAArray(i, rawData);
-        red_mask[i] = temp_pixel.RED / Pix.RED;
-        green_mask[i] = temp_pixel.GREEN / Pix.GREEN;
-        blue_mask[i] = temp_pixel.BLUE / Pix.BLUE;
-        
-//        if (red_mask[i] > 1.0 || green_mask[i] > 1.0 || blue_mask[i] > 1.0) {
-//            NSLog(@"temp: %.1f %.1f %.1f Pix: %.1f %.1f %.1f", temp_pixel.RED, temp_pixel.GREEN, temp_pixel.BLUE, Pix.RED, Pix.GREEN, Pix.BLUE);
-//            NSLog(@"r %.1f g %.1f b %.1f", red_mask[i], green_mask[i], blue_mask[i]);
-//        }
-        
-        originalBlueChannelEqv += Pix.BLUE;
-        originalRedChannelEqv += Pix.RED;
-        originalGreenChannelEqv += Pix.GREEN;
+        current_red_mask[i] = temp_pixel.RED / Pix.RED;
+        current_green_mask[i] = temp_pixel.GREEN / Pix.GREEN;
+        current_blue_mask[i] = temp_pixel.BLUE / Pix.BLUE;
     }
-    originalBlueChannelEqv /= SIZE_OF_MASK;
-    originalGreenChannelEqv /= SIZE_OF_MASK;
-    originalRedChannelEqv /= SIZE_OF_MASK;
-//    NSLog(@"Original Eqvs: r = %f g = %f b = %f", originalRedChannelEqv, originalGreenChannelEqv, originalBlueChannelEqv);
     
     free(rawData);
 }
