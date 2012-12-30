@@ -49,7 +49,7 @@ pixel getPixelFromBGRAArray(int pixNum, unsigned char *array) {
 pixel getPixelFromRGBAArray(int pixNum, unsigned char *array) {
     pixel Pixel;
     int number = 4 * pixNum;
-    Pixel.BLUE = (float)array[number+2];
+    Pixel.BLUE = (float)array[number + 2];
     Pixel.GREEN = (float)array[number + 1];
     Pixel.RED = (float)array[number];
     return Pixel;
