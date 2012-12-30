@@ -13,21 +13,21 @@
 #import <CoreMedia/CoreMedia.h>
 
 #define SIZE_OF_MASK 5*5
-#define GLOBAL_EPS 0.3
+#define GLOBAL_EPS 50
 
-float current_red_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+unsigned current_red_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
 							1.0, 1.0, 1.0, 1.0, 1.0,
 							1.0, 1.0, 1.0, 1.0, 1.0,
 							1.0, 1.0, 1.0, 1.0, 1.0,
 							1.0, 1.0, 1.0, 1.0, 1.0};
 
-float current_green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+unsigned current_green_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
 							  1.0, 1.0, 1.0, 1.0, 1.0,
 							  1.0, 1.0, 1.0, 1.0, 1.0,
 							  1.0, 1.0, 1.0, 1.0, 1.0,
 							  1.0, 1.0, 1.0, 1.0, 1.0};
 
-float current_blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
+unsigned current_blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
 							 1.0, 1.0, 1.0, 1.0, 1.0,
 							 1.0, 1.0, 1.0, 1.0, 1.0,
 							 1.0, 1.0, 1.0, 1.0, 1.0,
@@ -39,24 +39,24 @@ float current_blue_mask[] = {1.0, 1.0, 1.0, 1.0, 1.0,
 pixel getPixelFromBGRAArray(int pixNum, unsigned char *array) {
     pixel Pixel;
     int number = 4 * pixNum;
-    Pixel.BLUE = (float)array[number];
-    Pixel.GREEN = (float)array[number + 1];
-    Pixel.RED = (float)array[number + 2];
+    Pixel.BLUE = (unsigned)array[number];
+    Pixel.GREEN = (unsigned)array[number + 1];
+    Pixel.RED = (unsigned)array[number + 2];
     return Pixel;
 }
 
 pixel getPixelFromRGBAArray(int pixNum, unsigned char *array) {
     pixel Pixel;
     int number = 4 * pixNum;
-    Pixel.BLUE = (float)array[number+2];
-    Pixel.GREEN = (float)array[number + 1];
-    Pixel.RED = (float)array[number];
+    Pixel.BLUE = (unsigned)array[number+2];
+    Pixel.GREEN = (unsigned)array[number + 1];
+    Pixel.RED = (unsigned)array[number];
     return Pixel;
 }
 
-BOOL compareMasks(float *firstMask, float *secondMask, float eps, int size) {
+BOOL compareMasks(unsigned *firstMask, unsigned *secondMask, int eps, int size) {
 	for (int i = 0; i < size; i++) {
-		if (fabsf(firstMask[i] - secondMask[i]) > eps) {
+		if (abs((int)firstMask[i] - (int)secondMask[i]) > eps) {
 			return NO;
 		}
 	}
@@ -72,28 +72,28 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     unsigned arraySize = width*height;
     unsigned maskSize = size * size;
 	
-	float redMask[25];
-	float greenMask[25];
-	float blueMask[25];
-	pixel maxPix;
+	unsigned redMask[SIZE_OF_MASK];
+	unsigned greenMask[SIZE_OF_MASK];
+	unsigned blueMask[SIZE_OF_MASK];
+//	pixel maxPix;
     
     while (globalIndex < arraySize) {
-		maxPix.RED = maxPix.GREEN = maxPix.BLUE = 0.0;
-        for (int r = 0; r < size; r++) {
-            for (int c = 0; c < size; c++) {
-                pixel temp_pixel = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
-				if (temp_pixel.RED > maxPix.RED) maxPix.RED = temp_pixel.RED;
-				if (temp_pixel.GREEN > maxPix.GREEN) maxPix.GREEN = temp_pixel.GREEN;
-				if (temp_pixel.BLUE > maxPix.BLUE) maxPix.BLUE = temp_pixel.BLUE;
-            }
-        }
+//		maxPix.RED = maxPix.GREEN = maxPix.BLUE = 0.0;
+//        for (int r = 0; r < size; r++) {
+//            for (int c = 0; c < size; c++) {
+//                pixel temp_pixel = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
+//				if (temp_pixel.RED > maxPix.RED) maxPix.RED = temp_pixel.RED;
+//				if (temp_pixel.GREEN > maxPix.GREEN) maxPix.GREEN = temp_pixel.GREEN;
+//				if (temp_pixel.BLUE > maxPix.BLUE) maxPix.BLUE = temp_pixel.BLUE;
+//            }
+//        }
 		
 		for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 pixel temp_pixel = getPixelFromBGRAArray(globalIndex + c + r*width, baseAddress);
-				redMask[r*size + c] = temp_pixel.RED / maxPix.RED;
-				greenMask[r*size + c] = temp_pixel.GREEN / maxPix.GREEN;
-				blueMask[r*size + c] = temp_pixel.BLUE / maxPix.BLUE;
+				redMask[r*size + c] = temp_pixel.RED;// / maxPix.RED;
+				greenMask[r*size + c] = temp_pixel.GREEN;// / maxPix.GREEN;
+				blueMask[r*size + c] = temp_pixel.BLUE;// / maxPix.BLUE;
             }
         }
 		
@@ -104,14 +104,17 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
             coords->x = x;
             coords->y = y;
             returnValue = YES;
+			break;
         }
         
         x++;
         globalIndex += size;
+//		globalIndex += 1;
         if (globalIndex % width == 0) {
             x = 0;
             y++;
             globalIndex += (size - 1)*width;
+//			globalIndex += width;
         }
     }
     
@@ -121,7 +124,7 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
 
 @interface AppController ()
 
-- (void)analyzeImageForMask:(CGImageRef)maskImage;
+- (CGImageRef)analyzeImageForMask:(CGImageRef)maskImage;
 
 @end
 
@@ -183,33 +186,35 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
 
 #pragma mark - Private methods
 
-- (void)analyzeImageForMask:(CGImageRef)maskImage
+- (CGImageRef)analyzeImageForMask:(CGImageRef)maskImage
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     unsigned char *rawData = (unsigned char *)calloc(SIZE_OF_MASK * 4, sizeof(unsigned char));
     CGContextRef context = CGBitmapContextCreate(rawData, SIZE_OF_MASK/5, SIZE_OF_MASK/5, 8, SIZE_OF_MASK/5 * 4, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(colorSpace);
     CGContextDrawImage(context, CGRectMake(0, 0, SIZE_OF_MASK/5, SIZE_OF_MASK/5), maskImage);
+	CGImageRef quartzImage = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
     
-    pixel Pix;
-    Pix.RED = Pix.GREEN = Pix.BLUE = 0.0;
-    for (int i = 0; i < SIZE_OF_MASK; i++) {
-        pixel temp_pixel = getPixelFromRGBAArray(i, rawData);
-        
-        if (temp_pixel.RED > Pix.RED) Pix.RED = temp_pixel.RED;
-        if (temp_pixel.GREEN > Pix.GREEN) Pix.GREEN = temp_pixel.GREEN;
-        if (temp_pixel.BLUE > Pix.BLUE) Pix.BLUE = temp_pixel.BLUE;
-    }
+//    pixel Pix;
+//    Pix.RED = Pix.GREEN = Pix.BLUE = 0.0;
+//    for (int i = 0; i < SIZE_OF_MASK; i++) {
+//        pixel temp_pixel = getPixelFromRGBAArray(i, rawData);
+//        
+//        if (temp_pixel.RED > Pix.RED) Pix.RED = temp_pixel.RED;
+//        if (temp_pixel.GREEN > Pix.GREEN) Pix.GREEN = temp_pixel.GREEN;
+//        if (temp_pixel.BLUE > Pix.BLUE) Pix.BLUE = temp_pixel.BLUE;
+//    }
     
     for (int i = 0; i < SIZE_OF_MASK; i++) {
         pixel temp_pixel = getPixelFromRGBAArray(i, rawData);
-        current_red_mask[i] = temp_pixel.RED / Pix.RED;
-        current_green_mask[i] = temp_pixel.GREEN / Pix.GREEN;
-        current_blue_mask[i] = temp_pixel.BLUE / Pix.BLUE;
+        current_red_mask[i] = temp_pixel.RED;// / Pix.RED;
+        current_green_mask[i] = temp_pixel.GREEN;// / Pix.GREEN;
+        current_blue_mask[i] = temp_pixel.BLUE;// / Pix.BLUE;
     }
-    
+	
     free(rawData);
+	return quartzImage;
 }
 
 #pragma mark - Actions
@@ -248,7 +253,6 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
         NSLog(@"Found point!");
         [self.drawView drawPointAtX:newPoint.x andY:newPoint.y];
     }
-//    else NSLog(@"No points found");
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize
@@ -273,15 +277,15 @@ BOOL getPointCoordsFromImageArray(NSPoint *coords, uint8_t *baseAddress, unsigne
     CGImageRef quartzImage = CGBitmapContextCreateImage(context);
     CGImageRef smallImage = CGImageCreateWithImageInRect(quartzImage, snapshotRect);
     
-    NSImage *finalImage = [[NSImage alloc] initWithCGImage:smallImage size:self.preview.frame.size];
+	CGImageRef resultImage = [self analyzeImageForMask:smallImage];
+    NSImage *finalImage = [[NSImage alloc] initWithCGImage:resultImage size:self.preview.frame.size];
     [self.preview setImage:finalImage];
     
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
     CGImageRelease(quartzImage);
-    
-    [self analyzeImageForMask:smallImage];
     CGImageRelease(smallImage);
+	CGImageRelease(resultImage);
 }
 
 @end

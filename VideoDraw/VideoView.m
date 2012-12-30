@@ -82,9 +82,11 @@
     [self.rectLayer setNeedsDisplay];
     
     if ([self.delegate respondsToSelector:@selector(doSnapshotWithRect:)]) {
-        float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
-        pseudoHeight = (currentPoint.x - startPoint.x > 0) ? pseudoHeight : -pseudoHeight;
-        NSRect destinationRect = NSMakeRect(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight);
+//        float pseudoHeight = ((currentPoint.y - startPoint.y) > 0) ? (currentPoint.x - startPoint.x) : -(currentPoint.x - startPoint.x);
+//        pseudoHeight = (currentPoint.x - startPoint.x > 0) ? pseudoHeight : -pseudoHeight;
+//        NSRect destinationRect = NSMakeRect(startPoint.x, startPoint.y, currentPoint.x - startPoint.x, pseudoHeight);
+		NSRect destinationRect;
+		
         [self.delegate doSnapshotWithRect:destinationRect];
     }
 }
