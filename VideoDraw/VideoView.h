@@ -7,29 +7,37 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <AVFoundation/AVFoundation.h>
 
-@class AVCaptureVideoPreviewLayer;
-@class AVCaptureSession;
+typedef struct _pixel {
+    unsigned RED, GREEN, BLUE;
+} pixel;
 
 @protocol VideoViewDelegate;
 
-@interface VideoView : NSView {
+@interface VideoView : NSView <AVCaptureVideoDataOutputSampleBufferDelegate> {
     NSPoint startPoint;
     NSPoint currentPoint;
     BOOL shouldClear;
+    
+    unsigned videoWidth, videoHeight, videoBytesPerRow;
 }
 
-@property (nonatomic) id <VideoViewDelegate> delegate;
+@property id <VideoViewDelegate> delegate;
 @property (strong, readonly) AVCaptureVideoPreviewLayer *videoLayer;
 @property (strong, readonly) CALayer *rectLayer;
-
-- (BOOL)prepareForVideoWithSession:(AVCaptureSession *)session;
+@property (strong, readonly) AVCaptureSession *session;
+@property uint8_t *baseAddress;
 
 @end
 
 
 @protocol VideoViewDelegate <NSObject>
 
-- (void)doSnapshotWithRect:(NSRect)snapshotRect;
+@required
+- (void)videoView:(VideoView *)view foundPointWithCoords:(NSPoint)point;
+
+@optional
+- (void)videoView:(VideoView *)view selectedImageMask:(CGImageRef)cgImage;
 
 @end
